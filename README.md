@@ -7,10 +7,9 @@ Weatherai is a bot for telegram which permit to receive weather prevision sharin
 # Features 
 ### Avaiable
   - Each time you share with the bot your location you will receive an update about the weather
-  
+  - Add a neural network for a better weather prevision
 ### In progress
 
-- Add a neural network for a better weather prevision
 - Add inline interaction with 3 days of prevision
 
 
