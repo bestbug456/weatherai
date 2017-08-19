@@ -9,14 +9,17 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/goml/gobrain"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type RequestManager struct {
-	WeatherApiKey string
-	Chatid        string
-	Telegramkey   string
-	s             *mgo.Session
+	WeatherApiKey   string
+	Chatid          string
+	Telegramkey     string
+	TelegramManager *TelegramManager
+	s               *mgo.Session
 }
 
 func InitInlineMode(weatherApiKey, chatid, telegramkey, address, username, password, option string, enableSSL bool, pvkeypath, chainpath string) {
@@ -47,11 +50,22 @@ func NewRequestManager(weatherApiKey, chatid, telegramKey, address, username, pa
 		sendMessageError(chatid, telegramKey, err)
 		s = nil
 	}
+	var brain *gobrain.FeedForward
+	if s != nil {
+		err = s.DB("weather").C("brain").Find(bson.M{}).One(&brain)
+		if err != nil && err == mgo.ErrNotFound {
+			brain = nil
+		}
+	} else {
+		brain = nil
+	}
+
 	return &RequestManager{
-		WeatherApiKey: weatherApiKey,
-		Chatid:        chatid,
-		Telegramkey:   telegramKey,
-		s:             s,
+		WeatherApiKey:   weatherApiKey,
+		Chatid:          chatid,
+		Telegramkey:     telegramKey,
+		TelegramManager: NewTelegramManager(telegramKey, brain),
+		s:               s,
 	}
 }
 
@@ -80,7 +94,7 @@ func (rm *RequestManager) NewRequest(w http.ResponseWriter, r *http.Request) {
 			ChatID: chatid,
 			Text:   "Send to me your position and I will tell to you the weather :)",
 		}
-		err = sendMessageOnTelegram(msg, rm.Telegramkey)
+		err = rm.TelegramManager.sendMessageOnTelegram(msg)
 		if err != nil {
 			sendMessageError(rm.Chatid, rm.Telegramkey, err)
 		}
@@ -102,6 +116,12 @@ func (rm *RequestManager) NewRequest(w http.ResponseWriter, r *http.Request) {
 		sendMessageError(rm.Chatid, rm.Telegramkey, err)
 		return
 	}
+
+	chatid := strconv.FormatInt(request.Message.Chat.Id, 10)
+	err = rm.TelegramManager.CreateTelegramMessageAndSend(&weather, chatid)
+	if err != nil {
+		sendMessageError(rm.Chatid, rm.Telegramkey, err)
+	}
 	// Dump information to the database
 	// if is enabled
 	if rm.s != nil {
@@ -112,11 +132,4 @@ func (rm *RequestManager) NewRequest(w http.ResponseWriter, r *http.Request) {
 			sendMessageError(rm.Chatid, rm.Telegramkey, err)
 		}
 	}
-	chatid := strconv.FormatInt(request.Message.Chat.Id, 10)
-	err = createTelegramMessageAndSend(weather, rm.Telegramkey, chatid)
-	if err != nil {
-		sendMessageError(rm.Chatid, rm.Telegramkey, err)
-		return
-	}
-
 }

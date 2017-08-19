@@ -26,6 +26,7 @@ func main() {
 		InitInlineMode(*weatherkey, *chatid, *telegramkey, *mongoAddress, *mongoUser, *mongopwd, *mongooption, *ssl, *fullchain, *pvkey)
 	}
 	ticker := NewJobTicker()
+	tgmanager := NewTelegramManager(*telegramkey, nil)
 	for {
 		<-ticker.t.C
 		ticker.updateJobTicker()
@@ -40,7 +41,7 @@ func main() {
 				sendMessageError(*chatid, *telegramkey, fmt.Errorf("Error while interacting with the databse: %s", err.Error()))
 			}
 		}
-		err = createTelegramMessageAndSend(weather, *telegramkey, *chatid)
+		err = tgmanager.CreateTelegramMessageAndSend(&weather, *chatid)
 		if err != nil {
 			sendMessageError(*chatid, *telegramkey, err)
 			continue

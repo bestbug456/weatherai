@@ -1,14 +1,15 @@
 package main
 
 type Response struct {
-	Coord      Coordinate         `json:"coord"`
-	Weather    []WeatherInfo      `json:"weather"`
-	Generic    GenericInformation `json:"main"`
-	Visibility int                `json:"visibility"`
-	Wind       WindInformation    `json:"wind"`
-	Clouds     CloudInformation   `json:"clouds`
-	DayTime    int64              `json:"dt`
-	Data       string             `json:"-"` // Internal: use for identify the data of the query
+	Coord            Coordinate         `json:"coord"`
+	Weather          []WeatherInfo      `json:"weather"`
+	Generic          GenericInformation `json:"main"`
+	Visibility       int                `json:"visibility"`
+	Wind             WindInformation    `json:"wind"`
+	Clouds           CloudInformation   `json:"clouds`
+	DayTime          int64              `json:"dt`
+	Data             string             `json:"-"` // Internal: use for identify the data of the query
+	Etiquetteweather string             `json:"-"` // Internal: the etiquette set by the NN
 }
 
 type Coordinate struct {
